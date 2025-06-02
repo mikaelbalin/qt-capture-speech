@@ -41,21 +41,24 @@ class CameraPreviewPopup(QDialog):
         self.setWindowTitle("Camera Preview")
         self.setModal(False)  # Allow interaction with main window
 
-        # Get preview dimensions
-        preview_width, preview_height = CameraConfig.get_preview_size(self.picam2)
+        # Make window resizable
+        self.setMinimumSize(400, 300)
+        self.setMaximumSize(1200, 900)
 
-        # Create camera preview widget
+        # Create camera preview widget - let it use default size first
         bg_colour = self.palette().color(QPalette.Background).getRgb()[:3]
-        self.qpicamera2 = QGlPicamera2(
-            self.picam2, width=preview_width, height=preview_height, bg_colour=bg_colour
-        )
+        self.qpicamera2 = QGlPicamera2(self.picam2, bg_colour=bg_colour)
+
+        # Set size policy to allow expansion
+        self.qpicamera2.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         layout = QVBoxLayout()
+        layout.setContentsMargins(10, 10, 10, 10)
         layout.addWidget(self.qpicamera2)
         self.setLayout(layout)
 
-        # Set window size
-        self.resize(preview_width + 20, preview_height + 40)
+        # Set initial window size
+        self.resize(800, 600)
 
     def closeEvent(self, event):
         """Handle close event."""
