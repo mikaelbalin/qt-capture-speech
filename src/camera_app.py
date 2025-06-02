@@ -148,13 +148,13 @@ class CameraApp(QWidget):
         # Controls grid (2x3 grid)
         controls_grid = QGridLayout()
 
-        # Row 0: Preview and Capture buttons
-        controls_grid.addWidget(self.preview_button, 0, 0, 1, 2)  # Span 2 columns
+        # Row 0
+        controls_grid.addWidget(self.continuous_checkbox, 0, 0, 1, 2)  # Span 2 columns
         controls_grid.addWidget(self.capture_button, 0, 2, 1, 2)  # Span 2 columns
 
-        # Row 1: Checkboxes
-        controls_grid.addWidget(self.continuous_checkbox, 1, 0, 1, 2)  # Span 2 columns
-        controls_grid.addWidget(self.af_checkbox, 1, 2, 1, 2)  # Span 2 columns
+        # Row 1
+        controls_grid.addWidget(self.af_checkbox, 1, 0, 1, 2)  # Span 2 columns
+        controls_grid.addWidget(self.preview_button, 1, 2, 1, 2)  # Span 2 columns
 
         layout.addLayout(controls_grid)
 
