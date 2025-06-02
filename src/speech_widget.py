@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QLabel,
     QApplication,
+    QSizePolicy,
 )
 from PyQt5.QtCore import Qt
 
@@ -31,22 +32,25 @@ class SpeechRecognitionWidget(QWidget):
         self.transcript_display = QTextEdit()
         self.transcript_display.setReadOnly(True)
         self.transcript_display.setPlaceholderText("Transcript will appear here...")
-        self.transcript_display.setMinimumHeight(200)
+        self.transcript_display.setMinimumHeight(100)  # Reduced minimum height
+        self.transcript_display.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding
+        )
         layout.addWidget(self.transcript_display)
 
         # Control buttons
         button_layout = QHBoxLayout()
 
-        self.start_button = QPushButton("Start Recording")
+        self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self._on_start_clicked)
         button_layout.addWidget(self.start_button)
 
-        self.stop_button = QPushButton("Stop Recording")
+        self.stop_button = QPushButton("Stop")
         self.stop_button.clicked.connect(self._on_stop_clicked)
         self.stop_button.setEnabled(False)
         button_layout.addWidget(self.stop_button)
 
-        self.copy_button = QPushButton("Copy Transcript")
+        self.copy_button = QPushButton("Copy")
         self.copy_button.clicked.connect(self._on_copy_clicked)
         button_layout.addWidget(self.copy_button)
 
@@ -63,6 +67,7 @@ class SpeechRecognitionWidget(QWidget):
         layout.addWidget(self.status_label)
 
         self.setLayout(layout)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
     def _connect_signals(self):
         """Connect speech recognition signals to UI updates."""

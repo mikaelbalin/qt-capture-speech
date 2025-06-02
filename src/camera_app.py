@@ -10,7 +10,6 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
-    QSplitter,
     QFrame,
 )
 from PyQt5.QtCore import Qt
@@ -62,28 +61,34 @@ class CameraApp(QWidget):
         # Get preview dimensions
         preview_width, preview_height = CameraConfig.get_preview_size(self.picam2)
 
-        # Create main splitter for side-by-side layout
-        main_splitter = QSplitter(Qt.Horizontal)
-
         # Create camera panel
         camera_panel = self._create_camera_panel(preview_width, preview_height)
-        main_splitter.addWidget(camera_panel)
+        camera_panel.setMinimumWidth(200)  # Set a small minimum width
 
         # Create speech recognition panel
         self.speech_widget = SpeechRecognitionWidget()
+        self.speech_widget.setSizePolicy(
+            self.speech_widget.sizePolicy().horizontalPolicy(),
+            self.speech_widget.sizePolicy().verticalPolicy(),
+        )
+
         speech_frame = QFrame()
         speech_frame.setFrameStyle(QFrame.StyledPanel)
+        speech_frame.setSizePolicy(
+            self.speech_widget.sizePolicy().horizontalPolicy(),
+            self.speech_widget.sizePolicy().verticalPolicy(),
+        )
+        speech_frame.setMinimumWidth(100)  # Set a very small minimum width
+
         speech_layout = QVBoxLayout()
+        speech_layout.setContentsMargins(5, 5, 5, 5)  # Reduce margins
         speech_layout.addWidget(self.speech_widget)
         speech_frame.setLayout(speech_layout)
-        main_splitter.addWidget(speech_frame)
 
-        # Set splitter proportions (60% camera, 40% speech)
-        main_splitter.setSizes([int(preview_width * 0.6), int(preview_width * 0.4)])
-
-        # Main layout
+        # Main layout - direct horizontal layout without splitter
         main_layout = QHBoxLayout()
-        main_layout.addWidget(main_splitter)
+        main_layout.addWidget(camera_panel, 3)  # Camera takes 3/5 of space
+        main_layout.addWidget(speech_frame, 2)  # Speech takes 2/5 of space
         self.setLayout(main_layout)
 
         # Set window size
@@ -93,12 +98,17 @@ class CameraApp(QWidget):
     def _create_camera_panel(self, preview_width, preview_height):
         """Create the camera panel widget."""
         camera_widget = QWidget()
+        camera_widget.setSizePolicy(
+            camera_widget.sizePolicy().horizontalPolicy(),
+            camera_widget.sizePolicy().verticalPolicy(),
+        )
 
         # Create camera preview widget
         bg_colour = self.palette().color(QPalette.Background).getRgb()[:3]
         self.qpicamera2 = QGlPicamera2(
             self.picam2, width=preview_width, height=preview_height, bg_colour=bg_colour
         )
+        self.qpicamera2.setMinimumSize(160, 120)  # Set minimum size for preview
         self.qpicamera2.done_signal.connect(
             self._camera_callback, type=QtCore.Qt.QueuedConnection
         )
