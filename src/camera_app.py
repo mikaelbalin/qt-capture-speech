@@ -87,8 +87,8 @@ class CameraApp(QWidget):
 
         # Main layout - direct horizontal layout without splitter
         main_layout = QHBoxLayout()
-        main_layout.addWidget(camera_panel, 3)  # Camera takes 3/5 of space
-        main_layout.addWidget(speech_frame, 2)  # Speech takes 2/5 of space
+        main_layout.addWidget(camera_panel, 1)  # Camera takes 1/2 of space
+        main_layout.addWidget(speech_frame, 1)  # Speech takes 1/2 of space
         self.setLayout(main_layout)
 
         # Set window size
