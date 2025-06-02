@@ -12,6 +12,9 @@ from PyQt5.QtWidgets import (
     QWidget,
     QFrame,
     QDialog,
+    QGridLayout,
+    QSizePolicy,
+    QLabel,
 )
 from PyQt5.QtCore import Qt
 from libcamera import controls
@@ -101,28 +104,30 @@ class CameraApp(QWidget):
             self._camera_callback, type=QtCore.Qt.QueuedConnection
         )
 
-        # Create camera controls panel
-        camera_panel = self._create_camera_controls_panel()
+        # Create main vertical layout
+        main_layout = QVBoxLayout()
 
-        # Create speech recognition panel
+        # Create speech recognition widget (top section)
         self.speech_widget = SpeechRecognitionWidget()
-        speech_frame = QFrame()
-        speech_frame.setFrameStyle(QFrame.StyledPanel)
-        speech_frame.setMinimumWidth(100)
+        self.speech_widget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        main_layout.addWidget(self.speech_widget, 1)  # Takes most space
 
-        speech_layout = QVBoxLayout()
-        speech_layout.setContentsMargins(5, 5, 5, 5)
-        speech_layout.addWidget(self.speech_widget)
-        speech_frame.setLayout(speech_layout)
+        # Add separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.HLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator.setStyleSheet("QFrame { color: #ccc; }")
+        main_layout.addWidget(separator)
 
-        # Main layout - direct horizontal layout
-        main_layout = QHBoxLayout()
-        main_layout.addWidget(camera_panel, 1)  # Camera controls take 1/2 of space
-        main_layout.addWidget(speech_frame, 1)  # Speech takes 1/2 of space
+        # Create camera controls panel (bottom section)
+        camera_panel = self._create_camera_controls_panel()
+        camera_panel.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Minimum)
+        main_layout.addWidget(camera_panel, 0)  # Fixed size, doesn't expand
+
         self.setLayout(main_layout)
 
-        # Set window size (much smaller now without preview)
-        self.resize(800, 400)
+        # Set window size
+        self.resize(600, 500)
 
     def _create_camera_controls_panel(self):
         """Create the camera controls panel widget."""
@@ -131,21 +136,29 @@ class CameraApp(QWidget):
         # Create camera controls
         self._create_camera_controls()
 
-        # Camera controls layout
-        layout_v_camera = QVBoxLayout()
+        # Camera controls in grid layout
+        layout = QVBoxLayout()
 
-        # Add preview toggle button
-        layout_v_camera.addWidget(self.preview_button)
+        # Title label
+        title_label = QLabel("Camera Controls")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
+        layout.addWidget(title_label)
 
-        # Add other controls
-        layout_h_controls = QHBoxLayout()
-        layout_h_controls.addWidget(self.continuous_checkbox)
-        layout_h_controls.addWidget(self.af_checkbox)
-        layout_h_controls.addWidget(self.capture_button)
+        # Controls grid (2x3 grid)
+        controls_grid = QGridLayout()
 
-        layout_v_camera.addLayout(layout_h_controls)
+        # Row 0: Preview and Capture buttons
+        controls_grid.addWidget(self.preview_button, 0, 0, 1, 2)  # Span 2 columns
+        controls_grid.addWidget(self.capture_button, 0, 2, 1, 2)  # Span 2 columns
 
-        camera_widget.setLayout(layout_v_camera)
+        # Row 1: Checkboxes
+        controls_grid.addWidget(self.continuous_checkbox, 1, 0, 1, 2)  # Span 2 columns
+        controls_grid.addWidget(self.af_checkbox, 1, 2, 1, 2)  # Span 2 columns
+
+        layout.addLayout(controls_grid)
+
+        camera_widget.setLayout(layout)
         return camera_widget
 
     def _create_camera_controls(self):

@@ -7,6 +7,7 @@ from PyQt5.QtWidgets import (
     QLabel,
     QApplication,
     QSizePolicy,
+    QGridLayout,
 )
 from PyQt5.QtCore import Qt
 
@@ -28,37 +29,37 @@ class SpeechRecognitionWidget(QWidget):
         """Initialize the speech recognition UI."""
         layout = QVBoxLayout()
 
-        # Transcript display
+        # Transcript display at the top
         self.transcript_display = QTextEdit()
         self.transcript_display.setReadOnly(True)
         self.transcript_display.setPlaceholderText("Transcript will appear here...")
-        self.transcript_display.setMinimumHeight(100)  # Reduced minimum height
+        self.transcript_display.setMinimumHeight(100)
         self.transcript_display.setSizePolicy(
             QSizePolicy.Expanding, QSizePolicy.Expanding
         )
         layout.addWidget(self.transcript_display)
 
-        # Control buttons
-        button_layout = QHBoxLayout()
+        # Control buttons in 2x2 grid
+        button_grid = QGridLayout()
 
         self.start_button = QPushButton("Start")
         self.start_button.clicked.connect(self._on_start_clicked)
-        button_layout.addWidget(self.start_button)
+        button_grid.addWidget(self.start_button, 0, 0)
 
         self.stop_button = QPushButton("Stop")
         self.stop_button.clicked.connect(self._on_stop_clicked)
         self.stop_button.setEnabled(False)
-        button_layout.addWidget(self.stop_button)
+        button_grid.addWidget(self.stop_button, 0, 1)
 
         self.copy_button = QPushButton("Copy")
         self.copy_button.clicked.connect(self._on_copy_clicked)
-        button_layout.addWidget(self.copy_button)
+        button_grid.addWidget(self.copy_button, 1, 0)
 
         self.clear_button = QPushButton("Clear")
         self.clear_button.clicked.connect(self._on_clear_clicked)
-        button_layout.addWidget(self.clear_button)
+        button_grid.addWidget(self.clear_button, 1, 1)
 
-        layout.addLayout(button_layout)
+        layout.addLayout(button_grid)
 
         # Status label
         self.status_label = QLabel("Ready")
