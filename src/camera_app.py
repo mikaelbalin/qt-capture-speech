@@ -10,7 +10,10 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QSplitter,
+    QFrame,
 )
+from PyQt5.QtCore import Qt
 from libcamera import controls
 
 from picamera2 import Picamera2
@@ -18,6 +21,7 @@ from picamera2.previews.qt import QGlPicamera2
 
 from camera_config import CameraConfig
 from file_utils import FileManager
+from speech_widget import SpeechRecognitionWidget
 
 
 class CameraApp(QWidget):
@@ -33,6 +37,7 @@ class CameraApp(QWidget):
         self.picam2 = None
         self.qpicamera2 = None
         self.file_manager = FileManager()
+        self.speech_widget = None
 
         self._init_camera()
         self._init_ui()
@@ -52,10 +57,42 @@ class CameraApp(QWidget):
 
     def _init_ui(self):
         """Initialize the user interface."""
-        self.setWindowTitle("Qt Picamera2 App")
+        self.setWindowTitle("Camera & Speech Recognition App")
 
         # Get preview dimensions
         preview_width, preview_height = CameraConfig.get_preview_size(self.picam2)
+
+        # Create main splitter for side-by-side layout
+        main_splitter = QSplitter(Qt.Horizontal)
+
+        # Create camera panel
+        camera_panel = self._create_camera_panel(preview_width, preview_height)
+        main_splitter.addWidget(camera_panel)
+
+        # Create speech recognition panel
+        self.speech_widget = SpeechRecognitionWidget()
+        speech_frame = QFrame()
+        speech_frame.setFrameStyle(QFrame.StyledPanel)
+        speech_layout = QVBoxLayout()
+        speech_layout.addWidget(self.speech_widget)
+        speech_frame.setLayout(speech_layout)
+        main_splitter.addWidget(speech_frame)
+
+        # Set splitter proportions (60% camera, 40% speech)
+        main_splitter.setSizes([int(preview_width * 0.6), int(preview_width * 0.4)])
+
+        # Main layout
+        main_layout = QHBoxLayout()
+        main_layout.addWidget(main_splitter)
+        self.setLayout(main_layout)
+
+        # Set window size
+        total_width = preview_width + 400  # Add width for speech panel
+        self.resize(total_width, preview_height + 80)
+
+    def _create_camera_panel(self, preview_width, preview_height):
+        """Create the camera panel widget."""
+        camera_widget = QWidget()
 
         # Create camera preview widget
         bg_colour = self.palette().color(QPalette.Background).getRgb()[:3]
@@ -66,14 +103,29 @@ class CameraApp(QWidget):
             self._camera_callback, type=QtCore.Qt.QueuedConnection
         )
 
-        # Create controls
-        self._create_controls()
+        # Create camera controls
+        self._create_camera_controls()
 
-        # Layout
-        self._setup_layout(preview_width, preview_height)
+        # Camera panel layout
+        layout_v_camera = QVBoxLayout()
+        layout_h_controls = QHBoxLayout()
 
-    def _create_controls(self):
-        """Create UI controls."""
+        # Add preview to camera layout
+        layout_v_camera.addWidget(self.qpicamera2)
+
+        # Add controls to horizontal layout
+        layout_h_controls.addWidget(self.continuous_checkbox)
+        layout_h_controls.addWidget(self.af_checkbox)
+        layout_h_controls.addWidget(self.button)
+
+        # Add controls to camera layout
+        layout_v_camera.addLayout(layout_h_controls)
+
+        camera_widget.setLayout(layout_v_camera)
+        return camera_widget
+
+    def _create_camera_controls(self):
+        """Create camera UI controls."""
         self.button = QPushButton("Click to capture JPEG")
         self.button.clicked.connect(self._on_capture_clicked)
 
@@ -81,26 +133,6 @@ class CameraApp(QWidget):
 
         self.continuous_checkbox = QCheckBox("Continuous AF", checked=False)
         self.continuous_checkbox.toggled.connect(self._on_continuous_toggled)
-
-    def _setup_layout(self, preview_width, preview_height):
-        """Setup the window layout."""
-        layout_v_main = QVBoxLayout()
-        layout_h_controls = QHBoxLayout()
-
-        # Add preview to main layout
-        layout_v_main.addWidget(self.qpicamera2)
-
-        # Add controls to horizontal layout
-        layout_h_controls.addWidget(self.continuous_checkbox)
-        layout_h_controls.addWidget(self.af_checkbox)
-        layout_h_controls.addWidget(self.button)
-
-        # Add controls to main layout
-        layout_v_main.addLayout(layout_h_controls)
-
-        # Set window properties
-        self.resize(preview_width, preview_height + 80)
-        self.setLayout(layout_v_main)
 
     def _on_capture_clicked(self):
         """Handle capture button click."""
@@ -162,4 +194,6 @@ class CameraApp(QWidget):
         """Handle window close event."""
         if self.picam2:
             self.picam2.stop()
+        if self.speech_widget:
+            self.speech_widget.closeEvent(event)
         event.accept()
