@@ -39,27 +39,29 @@ class SpeechRecognitionWidget(QWidget):
         )
         layout.addWidget(self.transcript_display)
 
-        # Control buttons in 2x2 grid
-        button_grid = QGridLayout()
+        # Control buttons layout
+        button_layout = QHBoxLayout()
 
-        self.start_button = QPushButton("Start")
-        self.start_button.clicked.connect(self._on_start_clicked)
-        button_grid.addWidget(self.start_button, 0, 0)
+        # Record toggle button on the left (takes more space)
+        self.record_button = QPushButton("Start Recording")
+        self.record_button.clicked.connect(self._on_record_toggle_clicked)
+        self.record_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        button_layout.addWidget(self.record_button, 2)  # Give it 2 parts of space
 
-        self.stop_button = QPushButton("Stop")
-        self.stop_button.clicked.connect(self._on_stop_clicked)
-        self.stop_button.setEnabled(False)
-        button_grid.addWidget(self.stop_button, 0, 1)
+        # Right side buttons in vertical layout
+        right_buttons = QVBoxLayout()
 
         self.copy_button = QPushButton("Copy")
         self.copy_button.clicked.connect(self._on_copy_clicked)
-        button_grid.addWidget(self.copy_button, 1, 0)
+        right_buttons.addWidget(self.copy_button)
 
         self.clear_button = QPushButton("Clear")
         self.clear_button.clicked.connect(self._on_clear_clicked)
-        button_grid.addWidget(self.clear_button, 1, 1)
+        right_buttons.addWidget(self.clear_button)
 
-        layout.addLayout(button_grid)
+        button_layout.addLayout(right_buttons, 1)  # Give it 1 part of space
+
+        layout.addLayout(button_layout)
 
         # Status label
         self.status_label = QLabel("Ready")
@@ -77,13 +79,12 @@ class SpeechRecognitionWidget(QWidget):
         self.speech_recognition.recording_started.connect(self._on_recording_started)
         self.speech_recognition.recording_stopped.connect(self._on_recording_stopped)
 
-    def _on_start_clicked(self):
-        """Handle start recording button click."""
-        self.speech_recognition.start_recording()
-
-    def _on_stop_clicked(self):
-        """Handle stop recording button click."""
-        self.speech_recognition.stop_recording()
+    def _on_record_toggle_clicked(self):
+        """Handle record toggle button click."""
+        if self.speech_recognition.is_recording:
+            self.speech_recognition.stop_recording()
+        else:
+            self.speech_recognition.start_recording()
 
     def _on_copy_clicked(self):
         """Copy transcript to clipboard."""
@@ -122,15 +123,13 @@ class SpeechRecognitionWidget(QWidget):
 
     def _on_recording_started(self):
         """Update UI when recording starts."""
-        self.start_button.setEnabled(False)
-        self.stop_button.setEnabled(True)
+        self.record_button.setText("Stop Recording")
         self.status_label.setText("Recording... Speak now")
         self.status_label.setStyleSheet("color: green; font-size: 12px;")
 
     def _on_recording_stopped(self):
         """Update UI when recording stops."""
-        self.start_button.setEnabled(True)
-        self.stop_button.setEnabled(False)
+        self.record_button.setText("Start Recording")
         self.status_label.setText("Recording stopped")
         self.status_label.setStyleSheet("color: #666; font-size: 12px;")
 
