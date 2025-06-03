@@ -11,7 +11,19 @@ class FileManager:
 
     def __init__(self, base_path=None):
         """Initialize file manager with base path."""
-        self.base_path = base_path or os.path.dirname(os.path.abspath(__file__))
+        if base_path:
+            self.base_path = base_path
+        else:
+            # Get the directory of the current file (file_utils.py)
+            current_file_dir = os.path.dirname(os.path.abspath(__file__))
+            # Go up one level to get the project root (e.g., /home/project)
+            project_root = os.path.dirname(current_file_dir)
+            # Define the images directory
+            self.base_path = os.path.join(project_root, "images")
+
+        # Ensure the images directory exists
+        if not os.path.exists(self.base_path):
+            os.makedirs(self.base_path)
 
     def get_next_filename(self, base_name="output"):
         """Find the next available filename by checking existing files."""
