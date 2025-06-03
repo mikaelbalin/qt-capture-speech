@@ -83,6 +83,13 @@ class SpeechRecognitionWidget(QWidget):
         """Handle record toggle button click."""
         if self.speech_recognition.is_recording:
             self.speech_recognition.stop_recording()
+            # Copy transcript to clipboard after stopping recording
+            if self.final_transcript.strip():
+                clipboard = QApplication.clipboard()
+                clipboard.setText(self.final_transcript.strip())
+                self.status_label.setText(
+                    "Recording stopped - Transcript copied to clipboard!"
+                )
         else:
             # Clear transcript before starting new recording
             self.transcript_display.clear()
