@@ -83,15 +83,9 @@ class SnapshotListWidget(QWidget):
         """Initialize the snapshot list UI."""
         layout = QVBoxLayout()
 
-        # Title label
-        title_label = QLabel("Recent Snapshots")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
-        layout.addWidget(title_label)
-
         # List widget for snapshots
         self.snapshot_list = QListWidget()
-        self.snapshot_list.setMaximumHeight(200)  # Increased height for thumbnails
+        self.snapshot_list.setMaximumHeight(130)  # Increased height for thumbnails
 
         # Set icon size for thumbnails
         self.snapshot_list.setIconSize(QSize(60, 45))  # 4:3 aspect ratio
