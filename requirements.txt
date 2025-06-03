@@ -1,15 +1,5 @@
-# Qt and GUI
-# PyQt5>=5.15.0,<6.0.0
-
-# Computer Vision
-opencv-python>=4.5.0
-numpy>=1.21.0
-
 # Audio Processing
 pyaudio>=0.2.11
 
 # Google Cloud Speech
 google-cloud-speech>=2.16.0
-
-# Configuration
-PyYAML>=6.0
