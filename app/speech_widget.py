@@ -113,7 +113,7 @@ class SpeechRecognitionWidget(QWidget):
     def _on_transcript_updated(self, transcript, is_final):
         """Update transcript display."""
         if is_final:
-            self.final_transcript += transcript + " "
+            self.final_transcript += transcript + "\n"
             self.current_transcript = ""
             display_text = self.final_transcript
         else:
