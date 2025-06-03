@@ -1,0 +1,57 @@
+# Application Configuration
+
+app:
+  name: "Qt Camera Speech Recognition"
+  version: "2.0.0"
+  debug: false
+
+camera:
+  device_id: 0
+  width: 640
+  height: 480
+  fps: 30
+  capture_format: "BGR"
+  save_format: "jpg"
+  save_quality: 95
+
+speech:
+  language_code: "en-US"
+  sample_rate: 16000
+  chunk_size: 1024
+  channels: 1
+  audio_format: "int16"
+  recognition_timeout: 30
+  interim_results: true
+
+files:
+  output_directory: "output"
+  image_directory: "images"
+  audio_directory: "audio"
+  filename_template: "{prefix}_{timestamp}.{extension}"
+
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "app.log"
+  max_size_mb: 10
+  backup_count: 5
+
+gui:
+  window:
+    title: "Camera & Speech Recognition"
+    width: 800
+    height: 600
+    resizable: true
+
+  camera_widget:
+    show_fps: true
+    show_resolution: true
+
+  speech_widget:
+    show_interim_results: true
+    max_history_lines: 100
+
+google_cloud:
+  # Set via environment variable: GOOGLE_APPLICATION_CREDENTIALS
+  project_id: ""
+  credentials_path: ""
