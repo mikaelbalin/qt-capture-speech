@@ -324,6 +324,8 @@ class CameraApp(QWidget):
             latest_file = self.file_manager.get_latest_filename("output")
             if latest_file:
                 print(f"Captured: {latest_file}")
+                # Automatically copy the captured image to clipboard
+                self._copy_image_to_clipboard(latest_file)
 
             # Refresh snapshot list
             if self.snapshot_widget:
@@ -332,6 +334,23 @@ class CameraApp(QWidget):
             # Reset camera and UI
             self.picam2.set_controls({"AfMode": controls.AfModeEnum.Auto})
             self._set_controls_enabled(True)
+
+    def _copy_image_to_clipboard(self, filename):
+        """Copy the specified image file to clipboard."""
+        if not filename:
+            return
+
+        image_path = os.path.join(self.file_manager.base_path, filename)
+        try:
+            pixmap = QPixmap(image_path)
+            if not pixmap.isNull():
+                clipboard = QApplication.clipboard()
+                clipboard.setPixmap(pixmap)
+                print(f"Auto-copied image to clipboard: {filename}")
+            else:
+                print(f"Failed to load captured image: {image_path}")
+        except Exception as e:
+            print(f"Error auto-copying image: {e}")
 
     def _on_continuous_toggled(self, checked):
         """Handle continuous autofocus toggle."""
@@ -347,17 +366,8 @@ class CameraApp(QWidget):
         if self.snapshot_widget:
             image_path = self.snapshot_widget.get_selected_image_path()
             if image_path:
-                try:
-                    pixmap = QPixmap(image_path)
-                    if not pixmap.isNull():
-                        clipboard = QApplication.clipboard()
-                        clipboard.setPixmap(pixmap)
-                        filename = os.path.basename(image_path)
-                        print(f"Copied image to clipboard: {filename}")
-                    else:
-                        print(f"Failed to load image: {image_path}")
-                except Exception as e:
-                    print(f"Error copying image: {e}")
+                filename = os.path.basename(image_path)
+                self._copy_image_to_clipboard(filename)
 
     def _on_snapshot_selection_changed(self):
         """Handle snapshot selection change to enable/disable copy button."""
