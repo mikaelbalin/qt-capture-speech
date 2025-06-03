@@ -246,13 +246,13 @@ class CameraApp(QWidget):
         second_row_layout = QHBoxLayout()
         second_row_layout.setSpacing(10)
 
-        self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.preview_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.preview_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
 
         second_row_layout.addWidget(self.copy_button, 1)
         second_row_layout.addWidget(self.preview_button, 1)
 
-        layout.addLayout(second_row_layout, 1)
+        layout.addLayout(second_row_layout, 0)  # Don't expand vertically
 
         camera_controls_widget.setLayout(layout)
         main_camera_layout.addWidget(camera_controls_widget, 1)  # Takes remaining space
