@@ -152,12 +152,10 @@ class CameraApp(QWidget):
         controls_grid = QGridLayout()
 
         # Row 0
-        controls_grid.addWidget(self.continuous_checkbox, 0, 0, 1, 2)  # Span 2 columns
-        controls_grid.addWidget(self.capture_button, 0, 2, 1, 2)  # Span 2 columns
+        controls_grid.addWidget(self.capture_button, 0, 0, 1, 2)  # Span 2 columns
+        controls_grid.addWidget(self.preview_button, 0, 2, 1, 2)  # Span 2 columns
 
-        # Row 1
-        controls_grid.addWidget(self.af_checkbox, 1, 0, 1, 2)  # Span 2 columns
-        controls_grid.addWidget(self.preview_button, 1, 2, 1, 2)  # Span 2 columns
+        # Note: AF checkboxes are created but not added to layout (hidden)
 
         layout.addLayout(controls_grid)
 
@@ -237,8 +235,6 @@ class CameraApp(QWidget):
     def _set_controls_enabled(self, enabled):
         """Enable or disable UI controls."""
         self.capture_button.setEnabled(enabled)
-        self.continuous_checkbox.setEnabled(enabled)
-        self.af_checkbox.setEnabled(enabled)
 
     def show(self):
         """Show the window and start camera."""
