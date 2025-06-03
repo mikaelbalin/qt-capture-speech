@@ -95,7 +95,7 @@ class CameraApp(QWidget):
         # Configure camera
         config = CameraConfig.get_preview_config(self.picam2)
         self.picam2.configure(config)
-        self.picam2.set_controls({"AfMode": controls.AfModeEnum.Auto})
+        self.picam2.set_controls({"AfMode": controls.AfModeEnum.Continuous})
 
     def _init_ui(self):
         """Initialize the user interface."""
@@ -173,9 +173,9 @@ class CameraApp(QWidget):
         self.capture_button = QPushButton("Click to capture JPEG")
         self.capture_button.clicked.connect(self._on_capture_clicked)
 
-        self.af_checkbox = QCheckBox("AF before capture", checked=False)
+        self.af_checkbox = QCheckBox("AF before capture", checked=True)
 
-        self.continuous_checkbox = QCheckBox("Continuous AF", checked=False)
+        self.continuous_checkbox = QCheckBox("Continuous AF", checked=True)
         self.continuous_checkbox.toggled.connect(self._on_continuous_toggled)
 
     def _on_preview_toggle(self, checked):
