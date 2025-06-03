@@ -47,5 +47,19 @@ class FileManager:
     def get_latest_filename(self, base_name="output"):
         """Get the most recently created file with the given base name."""
         pattern = os.path.join(self.base_path, f"{base_name}_*.jpg")
-        files = sorted(glob.glob(pattern))
-        return os.path.basename(files[-1]) if files else None
+        files = glob.glob(pattern)
+        if not files:
+            return None
+        # Sort by modification time (most recent first)
+        files.sort(key=os.path.getmtime, reverse=True)
+        return os.path.basename(files[0])
+
+    def get_recent_files(self, base_name="output", count=5):
+        """Get the most recent files with the given base name."""
+        pattern = os.path.join(self.base_path, f"{base_name}_*.jpg")
+        files = glob.glob(pattern)
+        if not files:
+            return []
+        # Sort by modification time (most recent first)
+        files.sort(key=os.path.getmtime, reverse=True)
+        return [os.path.basename(f) for f in files[:count]]

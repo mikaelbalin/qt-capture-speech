@@ -2,8 +2,9 @@
 Camera Application GUI and Logic
 """
 
+import os
 from PyQt5 import QtCore
-from PyQt5.QtGui import QPalette
+from PyQt5.QtGui import QPalette, QPixmap, QIcon
 from PyQt5.QtWidgets import (
     QCheckBox,
     QHBoxLayout,
@@ -15,8 +16,11 @@ from PyQt5.QtWidgets import (
     QGridLayout,
     QSizePolicy,
     QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QApplication,
 )
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSize
 from libcamera import controls
 
 from picamera2 import Picamera2
@@ -66,6 +70,79 @@ class CameraPreviewPopup(QDialog):
         event.ignore()
 
 
+class SnapshotListWidget(QWidget):
+    """Widget for displaying recent snapshots with copy functionality."""
+
+    def __init__(self, file_manager, parent=None):
+        super().__init__(parent)
+        self.file_manager = file_manager
+        self._init_ui()
+        self.refresh_snapshots()
+
+    def _init_ui(self):
+        """Initialize the snapshot list UI."""
+        layout = QVBoxLayout()
+
+        # Title label
+        title_label = QLabel("Recent Snapshots")
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
+        layout.addWidget(title_label)
+
+        # List widget for snapshots
+        self.snapshot_list = QListWidget()
+        self.snapshot_list.setMaximumHeight(200)  # Increased height for thumbnails
+
+        # Set icon size for thumbnails
+        self.snapshot_list.setIconSize(QSize(60, 45))  # 4:3 aspect ratio
+
+        # Set item spacing
+        self.snapshot_list.setSpacing(2)
+
+        layout.addWidget(self.snapshot_list)
+
+        self.setLayout(layout)
+
+    def _on_selection_changed(self):
+        """Handle selection change in the list."""
+        # This method is kept for potential future use
+        pass
+
+    def get_selected_image_path(self):
+        """Get the full path of the selected image."""
+        selected_items = self.snapshot_list.selectedItems()
+        if selected_items:
+            filename = selected_items[0].text()
+            return os.path.join(self.file_manager.base_path, filename)
+        return None
+
+    def refresh_snapshots(self):
+        """Refresh the list of recent snapshots."""
+        self.snapshot_list.clear()
+        recent_files = self.file_manager.get_recent_files("output", 5)
+
+        for filename in recent_files:
+            # Create list item
+            item = QListWidgetItem(filename)
+
+            # Load image as thumbnail
+            full_path = os.path.join(self.file_manager.base_path, filename)
+            try:
+                pixmap = QPixmap(full_path)
+                if not pixmap.isNull():
+                    # Scale pixmap to thumbnail size while maintaining aspect ratio
+                    thumbnail = pixmap.scaled(
+                        60, 45, Qt.KeepAspectRatio, Qt.SmoothTransformation
+                    )
+                    item.setIcon(QIcon(thumbnail))
+                else:
+                    print(f"Failed to load thumbnail for: {filename}")
+            except Exception as e:
+                print(f"Error loading thumbnail for {filename}: {e}")
+
+            self.snapshot_list.addItem(item)
+
+
 class CameraApp(QWidget):
     """Main camera application window."""
 
@@ -80,6 +157,7 @@ class CameraApp(QWidget):
         self.preview_popup = None
         self.file_manager = FileManager()
         self.speech_widget = None
+        self.snapshot_widget = None
 
         self._init_camera()
         self._init_ui()
@@ -136,43 +214,73 @@ class CameraApp(QWidget):
         """Create the camera controls panel widget."""
         camera_widget = QWidget()
 
-        # Create camera controls
+        # Create snapshot list widget first
+        self.snapshot_widget = SnapshotListWidget(self.file_manager)
+
+        # Create camera controls (now that snapshot_widget exists)
         self._create_camera_controls()
 
-        # Camera controls in grid layout
+        # Connect snapshot selection to copy button state
+        self.snapshot_widget.snapshot_list.itemSelectionChanged.connect(
+            self._on_snapshot_selection_changed
+        )
+
+        # Main horizontal layout for camera section
+        main_camera_layout = QHBoxLayout()
+
+        # Left side - Recent snapshots
+        self.snapshot_widget.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        main_camera_layout.addWidget(self.snapshot_widget, 0)  # Fixed size
+
+        # Add vertical separator
+        separator = QFrame()
+        separator.setFrameShape(QFrame.VLine)
+        separator.setFrameShadow(QFrame.Sunken)
+        separator.setStyleSheet("QFrame { color: #ccc; }")
+        main_camera_layout.addWidget(separator)
+
+        # Right side - Camera controls
+        camera_controls_widget = QWidget()
         layout = QVBoxLayout()
+        layout.setSpacing(10)  # Add spacing between buttons
 
-        # Title label
-        title_label = QLabel("Camera Controls")
-        title_label.setAlignment(Qt.AlignCenter)
-        title_label.setStyleSheet("font-weight: bold; font-size: 14px; margin: 5px;")
-        layout.addWidget(title_label)
+        # First row - Capture button (full width)
+        self.capture_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        layout.addWidget(self.capture_button, 1)
 
-        # Controls grid (2x3 grid)
-        controls_grid = QGridLayout()
+        # Second row - Copy and Preview buttons
+        second_row_layout = QHBoxLayout()
+        second_row_layout.setSpacing(10)
 
-        # Row 0
-        controls_grid.addWidget(self.capture_button, 0, 0, 1, 2)  # Span 2 columns
-        controls_grid.addWidget(self.preview_button, 0, 2, 1, 2)  # Span 2 columns
+        self.copy_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.preview_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
-        # Note: AF checkboxes are created but not added to layout (hidden)
+        second_row_layout.addWidget(self.copy_button, 1)
+        second_row_layout.addWidget(self.preview_button, 1)
 
-        layout.addLayout(controls_grid)
+        layout.addLayout(second_row_layout, 1)
 
-        camera_widget.setLayout(layout)
+        camera_controls_widget.setLayout(layout)
+        main_camera_layout.addWidget(camera_controls_widget, 1)  # Takes remaining space
+
+        camera_widget.setLayout(main_camera_layout)
         return camera_widget
 
     def _create_camera_controls(self):
         """Create camera UI controls."""
-        self.preview_button = QPushButton("Show Camera Preview")
+        self.preview_button = QPushButton("Preview")
         self.preview_button.setCheckable(True)
         self.preview_button.clicked.connect(self._on_preview_toggle)
 
-        self.capture_button = QPushButton("Click to capture JPEG")
+        self.capture_button = QPushButton("Capture")
         self.capture_button.clicked.connect(self._on_capture_clicked)
 
-        self.af_checkbox = QCheckBox("AF before capture", checked=True)
+        # Create copy button
+        self.copy_button = QPushButton("Copy Image")
+        self.copy_button.clicked.connect(self._on_copy_clicked)
+        self.copy_button.setEnabled(False)
 
+        self.af_checkbox = QCheckBox("AF before capture", checked=True)
         self.continuous_checkbox = QCheckBox("Continuous AF", checked=True)
         self.continuous_checkbox.toggled.connect(self._on_continuous_toggled)
 
@@ -180,10 +288,10 @@ class CameraApp(QWidget):
         """Handle preview toggle button."""
         if checked:
             self.preview_popup.show()
-            self.preview_button.setText("Hide Camera Preview")
+            self.preview_button.setText("Hide Preview")
         else:
             self.preview_popup.hide()
-            self.preview_button.setText("Show Camera Preview")
+            self.preview_button.setText("Show Preview")
 
     def _on_capture_clicked(self):
         """Handle capture button click."""
@@ -223,6 +331,10 @@ class CameraApp(QWidget):
             if latest_file:
                 print(f"Captured: {latest_file}")
 
+            # Refresh snapshot list
+            if self.snapshot_widget:
+                self.snapshot_widget.refresh_snapshots()
+
             # Reset camera and UI
             self.picam2.set_controls({"AfMode": controls.AfModeEnum.Auto})
             self._set_controls_enabled(True)
@@ -235,6 +347,28 @@ class CameraApp(QWidget):
     def _set_controls_enabled(self, enabled):
         """Enable or disable UI controls."""
         self.capture_button.setEnabled(enabled)
+
+    def _on_copy_clicked(self):
+        """Handle copy button click."""
+        if self.snapshot_widget:
+            image_path = self.snapshot_widget.get_selected_image_path()
+            if image_path:
+                try:
+                    pixmap = QPixmap(image_path)
+                    if not pixmap.isNull():
+                        clipboard = QApplication.clipboard()
+                        clipboard.setPixmap(pixmap)
+                        filename = os.path.basename(image_path)
+                        print(f"Copied image to clipboard: {filename}")
+                    else:
+                        print(f"Failed to load image: {image_path}")
+                except Exception as e:
+                    print(f"Error copying image: {e}")
+
+    def _on_snapshot_selection_changed(self):
+        """Handle snapshot selection change to enable/disable copy button."""
+        has_selection = bool(self.snapshot_widget.snapshot_list.selectedItems())
+        self.copy_button.setEnabled(has_selection)
 
     def show(self):
         """Show the window and start camera."""
