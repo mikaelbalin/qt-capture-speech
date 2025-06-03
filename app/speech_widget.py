@@ -84,6 +84,10 @@ class SpeechRecognitionWidget(QWidget):
         if self.speech_recognition.is_recording:
             self.speech_recognition.stop_recording()
         else:
+            # Clear transcript before starting new recording
+            self.transcript_display.clear()
+            self.current_transcript = ""
+            self.final_transcript = ""
             self.speech_recognition.start_recording()
 
     def _on_copy_clicked(self):
