@@ -71,6 +71,7 @@ class SpeechRecognition(QObject):
     error_occurred = pyqtSignal(str)
     recording_started = pyqtSignal()
     recording_stopped = pyqtSignal()
+    initialization_complete = pyqtSignal()  # New signal for initialization completion
 
     def __init__(self):
         super().__init__()
@@ -78,6 +79,7 @@ class SpeechRecognition(QObject):
         self.stream = None
         self.client = None
         self.recognition_thread = None
+        self._is_initialized = False
         self._setup_client()
 
     def _setup_client(self):
@@ -163,3 +165,46 @@ class SpeechRecognition(QObject):
             if is_final and re.search(r"\b(exit|quit)\b", transcript, re.I):
                 self.stop_recording()
                 break
+
+    def _prepare_recognition(self):
+        """Pre-initialize speech recognition components to avoid cold start delays."""
+        if self._is_initialized or not self.client:
+            return
+
+        try:
+            # Pre-initialize audio interface to warm up the system
+            audio_interface = pyaudio.PyAudio()
+
+            # Test microphone access and get default input device info
+            default_device = audio_interface.get_default_input_device_info()
+
+            # Brief initialization of audio stream to warm up the audio system
+            test_stream = audio_interface.open(
+                format=pyaudio.paInt16,
+                channels=1,
+                rate=RATE,
+                input=True,
+                frames_per_buffer=CHUNK,
+            )
+
+            # Read a small amount of audio data to fully initialize
+            test_stream.read(CHUNK, exception_on_overflow=False)
+
+            # Clean up test objects
+            test_stream.stop_stream()
+            test_stream.close()
+            audio_interface.terminate()
+
+            # Test speech client connection with a minimal config
+            test_config = speech.RecognitionConfig(
+                encoding=speech.RecognitionConfig.AudioEncoding.LINEAR16,
+                sample_rate_hertz=RATE,
+                language_code="en-US",
+            )
+
+            self._is_initialized = True
+            self.initialization_complete.emit()
+
+        except Exception as e:
+            print(f"Warning: Could not pre-warm speech recognition: {e}")
+            # Don't emit error signal as this is just optimization

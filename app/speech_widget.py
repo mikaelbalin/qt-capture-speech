@@ -7,7 +7,6 @@ from PyQt5.QtWidgets import (
     QLabel,
     QApplication,
     QSizePolicy,
-    QGridLayout,
 )
 from PyQt5.QtCore import Qt
 
@@ -22,8 +21,11 @@ class SpeechRecognitionWidget(QWidget):
         self.speech_recognition = SpeechRecognition()
         self.current_transcript = ""
         self.final_transcript = ""
+        self._is_first_recording = True
         self._init_ui()
         self._connect_signals()
+        # Pre-warm the speech recognition system
+        self._warm_up_speech_recognition()
 
     def _init_ui(self):
         """Initialize the speech recognition UI."""
@@ -78,6 +80,30 @@ class SpeechRecognitionWidget(QWidget):
         self.speech_recognition.error_occurred.connect(self._on_error)
         self.speech_recognition.recording_started.connect(self._on_recording_started)
         self.speech_recognition.recording_stopped.connect(self._on_recording_stopped)
+        self.speech_recognition.initialization_complete.connect(
+            self._on_initialization_complete
+        )
+
+    def _warm_up_speech_recognition(self):
+        """Pre-initialize speech recognition to avoid cold start delays."""
+        if self._is_first_recording:
+            self.status_label.setText("Initializing speech recognition...")
+            self.status_label.setStyleSheet("color: orange; font-size: 12px;")
+
+            # Run preparation in a separate thread to avoid blocking UI
+            import threading
+
+            warm_up_thread = threading.Thread(
+                target=self.speech_recognition._prepare_recognition
+            )
+            warm_up_thread.daemon = True
+            warm_up_thread.start()
+
+    def _on_initialization_complete(self):
+        """Handle speech recognition initialization completion."""
+        self._is_first_recording = False
+        self.status_label.setText("Ready - Speech recognition initialized")
+        self.status_label.setStyleSheet("color: green; font-size: 12px;")
 
     def _on_record_toggle_clicked(self):
         """Handle record toggle button click."""
@@ -91,6 +117,16 @@ class SpeechRecognitionWidget(QWidget):
                     "Recording stopped - Transcript copied to clipboard!"
                 )
         else:
+            # Show appropriate status based on initialization state
+            if self._is_first_recording:
+                self.status_label.setText(
+                    "Starting first recording (may take a moment)..."
+                )
+                self.status_label.setStyleSheet("color: orange; font-size: 12px;")
+            else:
+                self.status_label.setText("Starting recording...")
+                self.status_label.setStyleSheet("color: blue; font-size: 12px;")
+
             # Clear transcript before starting new recording
             self.transcript_display.clear()
             self.current_transcript = ""
