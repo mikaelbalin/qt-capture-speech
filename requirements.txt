@@ -1,5 +1,5 @@
 # Audio Processing
-pyaudio>=0.2.11
+pyaudio
 
 # Google Cloud Speech
-google-cloud-speech>=2.16.0
+google-cloud-speech
